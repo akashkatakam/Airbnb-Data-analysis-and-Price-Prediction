@@ -1,0 +1,391 @@
+<html>
+<head>
+    <meta charset='utf-8'/>
+    <title>Display a map</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no'/>
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.1/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.1/mapbox-gl.css' rel='stylesheet'/>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+            integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
+            integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+            crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
+            integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+            crossorigin="anonymous"></script>
+    <link href='../static/style.css' rel='stylesheet'/>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+          integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    {#<script type='text/javascript' src='stores.geojson'></script>#}
+    {#    <script src='../static/map.js'></script>#}
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+        table{
+        width: 100%;
+        margin-bottom: 20px;
+		border-collapse: collapse;
+        }
+        table, th, td{
+            border: 1px solid #cdcdcd;
+        }
+        table th, table td{
+            padding: 10px;
+            text-align: left;
+        }
+        .mapboxgl-popup {
+            font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-light bg-light">
+    <span class="navbar-brand mb-0 h1">AirBnB</span>
+</nav>
+<div class='row h-100'>
+    <div class='col-7'>
+        <div id='map'></div>
+    </div>
+    <div class='col-5' style="background-color: aliceblue;">
+        <div >
+            <h1>Neighbourhood </h1>
+        <select id="dropdownNg">
+            <option value="Boston" selected>Boston</option>
+        </select>
+        </div>
+        <div >
+            <h2>Places of interest </h2>
+        <select id="dropdownNg1">
+            <option value="Harvard" >Harvard</option>
+            <option value="Airport" >Airport</option>
+            <option value="Prudential" >Prudential</option>
+            <option value="Royale" >Royale</option>
+            <option value="Top of the hub" >Top of the hub</option>
+        </select>
+        </div>
+        <div>
+            <table id ='tabId'>
+                <thead>
+                    <tr>
+                        <th>ListingId</th>
+                        <th>Name</th>
+                        <th>Positive Reviews Sentiment</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+<script>
+    mapboxgl.accessToken = '{{ACCESS_KEY}}';
+    var data_geojson = {{ feature_data | safe}};
+    var neigbourhood = [];
+    var places_of_interest = {'Harvard': []};
+
+//initializing the map
+    var map = new mapboxgl.Map({
+        container: 'map', // container id
+        style: 'mapbox://styles/mapbox/streets-v11', // stylesheet location
+        center: [-71.0571571, 42.3133735], // starting position [lng, lat]
+        zoom: 9 // starting zoom
+    });
+    map.on('load', function () {
+        map.addLayer({
+            id: 'points',
+            type: 'circle',
+            source: {
+                type: 'geojson',
+                data: data_geojson
+            },
+            'paint': {
+                'circle-radius': 3,// color circles by ethnicity, using a match expression
+// https://docs.mapbox.com/mapbox-gl-js/style-spec/#expressions-match
+                'circle-color': ['get', 'color']
+            }
+
+        });
+        map.addLayer({
+            id: 'places of interest',
+            type: 'symbol',
+            source: {
+                type: 'geojson',
+                data: {
+                    "type": "FeatureCollection",
+                    "features": [{
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Harvard",
+                            "icon": "school"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [-71.13891, 42.380327]
+                        }
+                    }, {
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Top of the Hub",
+                            "icon": "Bar"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [-71.082518, 42.346516]
+                        }
+                    }, {
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Logan Airport",
+                            "icon": "Harbor"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [-71.0096, 42.3656]
+                        }
+                    }, {
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Royale",
+                            "icon": "bar"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [-71.065556, 42.349992]
+                        }
+                    }, {
+                        "type": "Feature",
+                        "properties": {
+                            "name": "Prudential",
+                            "icon": "entertainment"
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [-71.082518, 42.347143]
+                        }
+                    }]
+                }
+            },
+            "layout": {
+                "icon-image": "{icon}-15",
+                "icon-allow-overlap": false,
+                'icon-size' : 2.5
+
+            }
+
+        });
+        map.addControl(new mapboxgl.NavigationControl());
+        for (i = 0; i < data_geojson.features.length; i++) {
+            var currentFeature = data_geojson.features[i];
+            // Shorten data.feature.properties to `prop` so we're not
+            // writing this long form over and over again.
+            neigbourhood.push(currentFeature.properties.neighbourhood_cleansed);
+        }
+        var uniqueNames = [];
+        $.each(neigbourhood, function (i, el) {
+            if ($.inArray(el, uniqueNames) === -1) uniqueNames.push(el);
+        });
+        loadNeighbourhoodData(uniqueNames);
+
+    });
+    var popup = new mapboxgl.Popup({
+        closeButton: false,
+        closeOnClick: false
+    });
+
+    //Displaying popup
+    map.on('mouseenter', 'points', function (e) {
+        // Change the cursor style as a UI indicator.
+        map.getCanvas().style.cursor = 'pointer';
+
+        var coordinates = e.features[0].geometry.coordinates.slice();
+        var description = e.features[0].properties.name;
+
+    // Ensure that if the map is zoomed out such that multiple
+    // copies of the feature are visible, the popup appears
+    // over the copy being pointed to.
+        console.log(e);
+        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+        }
+
+        // Populate the popup and set its coordinates
+        // based on the feature found.
+        popup.setLngLat(coordinates)
+            .setHTML(description)
+            .addTo(map);
+    });
+
+    map.on('mouseleave', 'points', function () {
+        map.getCanvas().style.cursor = '';
+        popup.remove();
+    });
+
+    function loadNeighbourhoodData(data) {
+        console.log(data_geojson);
+        for (i = 0; i < data.length; i++) {
+            var select = document.getElementById('dropdownNg');
+            var opt = document.createElement('option');
+            opt.appendChild(document.createTextNode(data[i]));
+            opt.value = data[i];
+            select.appendChild(opt);
+        }
+    }
+
+    //Filtering data on Map beased on neighbourhood
+    function filterMapData(neighbourhood) {
+        //console.log(neighbourhood)
+        //console.log(data_geojson)
+        if(neighbourhood != 'Boston'){
+            var filters = ['==', 'neighbourhood_cleansed', neighbourhood];
+            map.setFilter('points', filters)
+        }else map.setFilter('points',null)
+        var neighbourhood_coordinates = {
+            "Fenway": [42.3448650479359, -71.1025997430301],
+            'Allston': [42.35937208, -71.13155989],
+            'Back Bay': [42.34949627, -71.08595385],
+            'Bay Village': [42.34845572, -71.06810029],
+            'Beacon Hill': [42.36115825, -71.06518711],
+            'Brighton': [42.35257298, -71.1505652],
+            'Charlestown': [42.37833822, -71.06662682],
+            'Chinatown': [42.35136451, -71.06235982],
+            'Dorchester': [42.32328571, -71.06210287],
+            'Downtown': [42.35918692, -71.06265111],
+            'East Boston': [42.36524121, -71.02936149],
+            'Hyde Park': [42.26118295, -71.11988803],
+            'Jamaica Plain': [42.31556512, -71.11482701],
+            'Leather District': [42.35132195, -71.05765499],
+            'Longwood Medical Area': [42.33938279, -71.10017235],
+            'Mattapan': [42.28192336, -71.09514436],
+            'Mission Hill': [42.33215158, -71.10674178],
+            'North End': [42.36351987, -71.05075392],
+            'Roslindale': [42.29243789, -71.13576525],
+            'Roxbury': [42.3298085, -71.09559469],
+            'South Boston': [42.33324331, -71.04199974],
+            'South Boston Waterfront': [42.34017314, -71.04762982],
+            'South End': [42.34259444, -71.0794207],
+            'West End': [42.36386502, -71.06895044],
+            'West Roxbury': [42.28719371, -71.16815974]
+
+        };
+        //console.log()
+        map.flyTo({
+            center: [neighbourhood_coordinates[neighbourhood][1], neighbourhood_coordinates[neighbourhood][0]],
+            zoom: 12.1
+        });
+        console.log(neighbourhood_coordinates[neighbourhood]);
+        //alert();
+    }
+
+    var dropdown = document.getElementById('dropdownNg');
+    dropdown.addEventListener('change', function (e) {
+        var element = document.getElementById("dropdownNg");
+        var selectedElement = element.options[element.selectedIndex].value;
+        filterMapData(selectedElement)
+
+    })
+    var dropdown2 = document.getElementById('dropdownNg1');
+    dropdown2.addEventListener('change', function (e) {
+        $("#tabid tr").remove();
+        var ma = "<tr><th>ListingId</th><th>Name</th><th>Review rating</th></tr>"
+        $("table thead").append(ma);
+        var element = document.getElementById("dropdownNg1");
+        var selectedElement = element.options[element.selectedIndex].value;
+        if(selectedElement == 'Airport'){
+            map.flyTo({
+                center: [-71.0096, 42.3656],
+                zoom: 12.1
+            });
+            var markup1 = "<tr><td>16179346</td><td>'xlLarge, Clean, Comfortable, 5-6 stop to Downtown'</td><td> 0.732</td></tr>";
+            var markup2 = "<tr><td>31295996</td><td>'Cozy Studio w/ plenty of amenities & city views'</td><td>0.671</td></tr>";
+            var markup3 = "<tr><td>29728508</td><td>'Support Local Businesses by Staying with GoLocal!'</td><td>0.64975</td></tr>";
+            var markup4 = "<tr><td>29585373</td><td>'Studio Apartment -- Next to Airport'</td><td>0.62</td></tr>";
+            var markup5 = "<tr><td>29680644</td><td>'Seaport Luxe Condo Studio 3'</td><td>0.57475</td></tr>";
+            $("table tbody").append(markup1);
+            $("table tbody").append(markup2);
+            $("table tbody").append(markup3);
+            $("table tbody").append(markup4);
+            $("table tbody").append(markup5);
+        }else if(selectedElement == 'Harvard'){
+            map.flyTo({
+                center: [-71.13891, 42.380327],
+                zoom: 15
+            });
+            var markup1 = "<tr><td>30505480</td><td>'Sophisticated 2BR in Lower Allston by Sonder'</td><td> 0.902</td></tr>";
+            var markup2 = "<tr><td>26450789</td><td>'Hip 2BR in Lower Allston by Sonder'</td><td>0.64</td></tr>";
+            var markup3 = "<tr><td>29929936</td><td>'Lily Room/Harvard Business School'+</td><td>0.634</td></tr>";
+            var markup4 = "<tr><td>21505991</td><td>'Comfortable private room/Fast booking and checkin!'</td><td>0.59</td></tr>";
+            var markup5 = "<tr><td>30320050</td><td>'Lovely Studio in Lower Allston by Sonder'</td><td>0.543</td></tr>";
+            $("table tbody").append(markup1);
+            $("table tbody").append(markup2);
+            $("table tbody").append(markup3);
+            $("table tbody").append(markup4);
+            $("table tbody").append(markup5);
+        }else if(selectedElement == 'Prudential'){
+            map.flyTo({
+                center: [-71.082518, 42.347143],
+                zoom: 15
+            });
+            var markup1 = "<tr><td>22162098</td><td>'Beautiful 2 Bedroom in The heart of Boston!'</td><td>1</td></tr>";
+            var markup2 = "<tr><td>26362139</td><td>'Two Bedroom in Boston's Back Bay #201'</td><td>1</td></tr>";
+            var markup3 = "<tr><td>28492660</td><td>'Classic 2BR in South End by Sonder'</td><td>1</td></tr>";
+            var markup4 = "<tr><td>31261651</td><td>'(116-9) Back Bay - Perfect Loft Studio'</td><td>0.83</td></tr>";
+            var markup5 = "<tr><td>29053226</td><td>Sleek 2BR in South End by Sonder</td><td>0.815</td></tr>";
+            $("table tbody").append(markup1);
+            $("table tbody").append(markup2);
+            $("table tbody").append(markup3);
+            $("table tbody").append(markup4);
+            $("table tbody").append(markup5);
+        }else if(selectedElement == 'Royale'){
+            map.flyTo({
+                center: [-71.065556, 42.349992],
+                zoom: 15
+            });
+            var markup1 = "<tr><td>26362139</td><td>'Two Bedroom in Boston's Back Bay #201'</td><td>1</td></tr>";
+            var markup2 = "<tr><td>28492660</td><td>'Classic 2BR in South End by Sonder'</td><td>1</td></tr>";
+            var markup3 = "<tr><td>31261651</td><td>'(116-9) Back Bay - Perfect Loft Studio'</td><td>0.83</td></tr>";
+            var markup4 = "<tr><td>29053226</td><td>'Sleek 2BR in South End by Sonder'</td><td>0.815</td></tr>";
+            var markup5 = "<tr><td>14299184</td><td>'One Bedroom located in the West End'</td><td>0.801</td></tr>";
+            $("table tbody").append(markup1);
+            $("table tbody").append(markup2);
+            $("table tbody").append(markup3);
+            $("table tbody").append(markup4);
+            $("table tbody").append(markup5);
+        }else{
+            map.flyTo({
+                center: [-71.08385, 42.346516],
+                zoom: 15
+            });
+            [-71.082518, 42.346516]
+            var markup1 = "<tr><td>22162098</td><td>'Beautiful 2 Bedroom in The heart of Boston!'</td><td>1</td></tr>";
+            var markup2 = "<tr><td>26362139</td><td>'Two Bedroom in Boston's Back Bay #201'</td><td>1</td></tr>";
+            var markup3 = "<tr><td>28492660</td><td>'Classic 2BR in South End by Sonder'</td><td>1</td></tr>";
+            var markup4 = "<tr><td>31261651</td><td>'(116-9) Back Bay - Perfect Loft Studio'</td><td>0.83</td></tr>";
+            var markup5 = "<tr><td>29053226</td><td>Sleek 2BR in South End by Sonder</td><td>0.815</td></tr>";
+            $("table tbody").append(markup1);
+            $("table tbody").append(markup2);
+            $("table tbody").append(markup3);
+            $("table tbody").append(markup4);
+            $("table tbody").append(markup5);
+        }
+    })
+
+    // console.log('{{feature_data}}');
+</script>
+
+</body>
+</html>
